@@ -1,0 +1,266 @@
+
+Sub clear1()
+Range("B4", "F4").Value = "" 'to clear the selected field
+End Sub
+Sub clear2()
+Range("I4", "M4").Value = "" 'to clear the selected field
+End Sub
+Sub clear3()
+Range("B16", "F16").Value = ""  'to clear the selected field
+End Sub
+Sub clear4()
+Range("I16", "M16").Value = "" 'to clear the selected field
+End Sub
+Sub clear5()
+Range("B25", "F25").Value = "" 'to clear the selected field
+End Sub
+
+
+Sub Bond_Price()
+
+
+Dim face_value, coupon, yield, price As Double
+Dim maturity As Integer
+'Enter the respective value
+face_value = InputBox("Enter Face Value (Rs.)")
+coupon = InputBox("Enter Coupon (%)")
+yield = InputBox("Enter Yield (%)")
+maturity = InputBox("Enter Maturity (yr)")
+'To convert coupon and yield in decimal form
+coupon = coupon / 100
+yield = yield / 100
+ 
+'Initializing the loop for calculating price
+price = 0
+ For i = 1 To (maturity - 1)
+        price = price + face_value * coupon / (1 + yield) ^ i
+        Next i
+        
+price = price + face_value * (1 + coupon) / (1 + yield) ^ maturity
+
+'Putting data back to excel sheet
+Range("F4").Value = price
+Range("B4").Value = face_value
+Range("C4").Value = coupon * 100
+Range("D4").Value = yield * 100
+Range("E4").Value = maturity
+End Sub
+
+Sub Bond_Yield()
+
+
+Dim face_value, coupon, yield, price As Double
+Dim maturity As Integer
+'Enter the respective value
+face_value = InputBox("Enter Face Value (Rs.)")
+coupon = InputBox("Enter Coupon (%)")
+price = InputBox("Enter Price (Rs.)")
+maturity = InputBox("Enter Maturity (yr)")
+
+'To convert coupon  in decimal form
+coupon = coupon / 100
+
+'Calculating yield with help of Excel Rate Function
+ yield = WorksheetFunction.Rate(maturity, coupon * face_value, -price, face_value)
+ 
+'Putting data back to Excel sheet
+Range("M4").Value = yield * 100
+Range("I4").Value = face_value
+Range("J4").Value = coupon * 100
+Range("K4").Value = price
+Range("L4").Value = maturity
+ 
+End Sub
+
+Sub duration()
+
+Dim face_value, coupon, yield, duration, SUM_PRICE, SUM_DURATION As Double
+Dim maturity As Integer
+'Enter the respective value
+face_value = InputBox("Enter Face Value (Rs.)")
+coupon = InputBox("Enter Coupon (%)")
+yield = InputBox("Enter Yield (%)")
+maturity = InputBox("Enter Maturity (yr)")
+
+'To convert coupon and yield in decimal form
+coupon = coupon / 100
+yield = yield / 100
+SUM_DURATION = 0
+SUM_PRICE = 0
+ 
+'Initializing the loop for calculating price and weighted price
+For i = 1 To (maturity - 1)
+  
+  SUM_PRICE = SUM_PRICE + face_value * (coupon) / (1 + yield) ^ i
+  SUM_DURATION = SUM_DURATION + i * face_value * (coupon) / (1 + yield) ^ i
+   Next i
+
+ SUM_PRICE = SUM_PRICE + face_value * (1 + coupon) / (1 + yield) ^ maturity
+ SUM_DURATION = SUM_DURATION + maturity * face_value * (1 + coupon) / (1 + yield) ^ maturity
+
+
+duration = SUM_DURATION / SUM_PRICE
+
+'Putting data back to excel sheet
+Range("F16").Value = duration
+Range("B16").Value = face_value
+Range("C16").Value = coupon * 100
+Range("D16").Value = yield * 100
+Range("E16").Value = maturity
+'Debug.Print duration
+
+
+End Sub
+
+Sub convexity()
+Dim face_value, coupon, yield, convexity, SUM_PRICE, SUM_DURATION, SUM_DD As Double
+Dim maturity As Integer
+'Enter the respective value
+face_value = InputBox("Enter Face Value (Rs.)")
+coupon = InputBox("Enter Coupon (%)")
+yield = InputBox("Enter Yield (%)")
+maturity = InputBox("Enter Maturity (yr)")
+'To convert coupon and yield in decimal form
+coupon = coupon / 100
+yield = yield / 100
+
+SUM_DD = 0
+SUM_PRICE = 0
+'Initializing the loop for calculating price and multiplied factor of price
+For i = 1 To (maturity - 1)
+  
+  SUM_PRICE = SUM_PRICE + face_value * (coupon) / (1 + yield) ^ i
+  
+  SUM_DD = SUM_DD + (i ^ 2 + i) * face_value * (coupon) / (1 + yield) ^ i
+   Next i
+
+ SUM_PRICE = SUM_PRICE + face_value * (1 + coupon) / (1 + yield) ^ maturity
+ 
+ SUM_DD = SUM_DD + (maturity ^ 2 + maturity) * face_value * (1 + coupon) / (1 + yield) ^ maturity
+ SUM_DD = SUM_DD / (1 + yield) ^ 2
+convexity = SUM_DD / SUM_PRICE
+
+'Putting data back to excel sheet
+Range("M16").Value = convexity
+Range("I16").Value = face_value
+Range("J16").Value = coupon * 100
+Range("K16").Value = yield * 100
+Range("L16").Value = maturity
+
+End Sub
+
+Sub ForwardRate()
+Dim s_rate, yield, m, f_rate As Double
+Dim maturity As Integer
+'Enter the respective value
+maturity = InputBox("Enter Maturity (yr)")
+yield = InputBox("Enter Spot rate till maturity(%)")
+s_rate = InputBox("Enter the Spot Rate till which the forward rate is required (%)")
+m = InputBox(" Enter Year for which the forward rate is required (yr)")
+
+'To convert spot_rate and yield in decimal form
+yield = yield / 100
+s_rate = s_rate / 100
+
+f_rate = ((1 + yield) ^ maturity / (1 + s_rate) ^ m) ^ (maturity - m) - 1
+
+'Putting data back to excel sheet
+Range("F25").Value = f_rate * 100
+Range("B25").Value = maturity
+Range("C25").Value = yield * 100
+Range("D25").Value = s_rate * 100
+Range("E25").Value = m
+End Sub
+
+
+Sub par_yield()
+Dim i, j As Integer
+Dim face_value, irr As Double
+Dim B() As Variant
+Dim coupon(10) As Variant ' coupon for i_th year
+Dim couponpv(10) As Variant ' present value of coupon for i_th year
+
+Workbooks("FIS").Worksheets("Sheet2").Activate  'Activating sheet3
+
+face_value = 100
+
+'copying coupon data from sheet2 in B()
+B() = Range("C3", Range("C3").End(xlDown))
+  
+'Initializing the loop for calculating coupon and present value of coupon
+For i = 1 To 10
+price = 0
+If (i = 1) Then
+coupon(i) = face_value * (1 + B(i, 1))
+couponpv(i) = coupon(i) / (1 + B(i, 1)) ^ i
+price = couponpv(i)
+
+coupon(0) = -price
+Else
+     For j = 1 To i - 1
+       couponpv(j) = 0
+       coupon(j) = 0
+       coupon(j) = face_value * B(j, 1)
+       couponpv(j) = coupon(j) / (1 + B(j, 1)) ^ j
+       
+
+       price = price + couponpv(j)
+
+     Next j
+    coupon(i) = face_value * (1 + B(i, 1))
+    
+    couponpv(i) = coupon(i) / (1 + B(i, 1)) ^ i
+    price = price + couponpv(i)
+    coupon(0) = -price
+End If
+
+'Putting data back to excel sheet
+Range("E2").Offset(0 + i, 0).Value = price
+irr = WorksheetFunction.irr(coupon)
+Range("F2").Offset(0 + i, 0).Value = irr * 100
+
+Next i
+'Erase coupon, couponpv, B ' to delete data from array
+End Sub
+
+Sub yield_curve()
+Dim i, j As Integer
+Dim face_value, price As Double
+Dim cprice() As Variant ' current price for each bond
+Dim coupon() As Variant ' coupon rate for each year
+Dim y(10) As Double     ' yield for i_th year
+
+Workbooks("FIS_final").Worksheets("Sheet3").Activate
+face_value = 100
+
+'copying current price and coupon data of bond from sheet2 in B()
+cprice() = Range("C2", Range("C2").End(xlDown))
+coupon() = Range("D2", Range("D2").End(xlDown))
+
+
+For i = 1 To 10
+If i = 1 Then
+y(i) = (face_value * (1 + coupon(i, 1)) / cprice(i, 1)) ^ (1 / i) - 1
+
+Else
+price = 0
+
+     For j = 1 To i - 1
+   price = price + face_value * coupon(i, 1) / (1 + y(j)) ^ j
+   
+     Next j
+     
+    y(i) = (face_value * (1 + coupon(i, 1)) / (cprice(i, 1) - price)) ^ (1 / i) - 1
+  
+   End If
+   
+   
+   Range("G1").Offset(0 + i, 0).Value = y(i) * 100    'Putting data back to excel sheet
+   
+   
+Next i
+'Erase y, coupon, cprice  ' to delete data from array
+
+End Sub
+
+
